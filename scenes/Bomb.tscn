@@ -1,10 +1,11 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://scripts/Bomb.gd" type="Script" id=1]
-[ext_resource path="res://assets/bomb.png" type="Texture" id=2]
+[ext_resource path="res://assets/graphics/bomb.png" type="Texture" id=2]
+[ext_resource path="res://assets/sounds/bomb_spawn.wav" type="AudioStream" id=3]
 
 [sub_resource type="CircleShape2D" id=1]
-radius = 14.0357
+radius = 16.0312
 
 [sub_resource type="Animation" id=2]
 resource_name = "bomb_ignited"
@@ -23,34 +24,52 @@ tracks/0/keys = {
 "values": [ Vector2( 0.25, 0.25 ), Vector2( 0.32, 0.32 ) ]
 }
 
-[node name="Bomb" type="RigidBody2D" groups=["bomb"]]
+[node name="Bomb" type="KinematicBody2D"]
 z_index = 1
 collision_layer = 4
-collision_mask = 3
-mode = 1
+collision_mask = 0
 script = ExtResource( 1 )
 
 [node name="Sprite" type="Sprite" parent="."]
 position = Vector2( 0, -4 )
-scale = Vector2( 0.27295, 0.27295 )
+scale = Vector2( 0.25, 0.25 )
 texture = ExtResource( 2 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 1 )
+
+[node name="BlastCollisionCheck" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 8
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BlastCollisionCheck"]
+shape = SubResource( 1 )
+
+[node name="InitCollisionCheck" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 3
+priority = 1.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InitCollisionCheck"]
 shape = SubResource( 1 )
 
 [node name="Timer" type="Timer" parent="."]
 wait_time = 4.0
 one_shot = true
 
-[node name="Area2D" type="Area2D" parent="."]
-collision_layer = 4
-collision_mask = 3
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
-shape = SubResource( 1 )
-
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 playback_speed = 1.4
 anims/bomb_ignited = SubResource( 2 )
 
-[connection signal="body_exited" from="Area2D" to="." method="_on_Area2D_body_exited"]
+[node name="Explosion" type="AudioStreamPlayer" parent="."]
+volume_db = -4.0
+bus = "sound"
+
+[node name="BombSpawn" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 3 )
+volume_db = -6.0
+
+[connection signal="area_entered" from="BlastCollisionCheck" to="." method="_on_BlastCollisionCheck_area_entered"]
+[connection signal="body_exited" from="InitCollisionCheck" to="." method="_on_InitCollisionCheck_body_exited"]
+[connection signal="timeout" from="Timer" to="." method="_on_Timer_timeout"]
